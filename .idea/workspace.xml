@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="a70b39b6-532b-45ec-ae22-eb6aee8ff9e6" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/panjiva_code/hscode_match.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/panjiva_code/make_attribute.py" afterDir="false" />
+=======
+    <list default="true" id="52381f1a-7d91-4fa4-aa26-4a1ca4343a9f" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/panjiva_code/Query02.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/panjiva_code/agg_data.py" afterDir="false" />
+>>>>>>> main
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,8 +37,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+<<<<<<< HEAD
   <component name="JupyterTrust" id="d84ba160-3bfb-48ca-8c69-a39dbbf7ff68" />
   <component name="ProjectId" id="1uboLz49CGQ4v5o8w4xwJLH0wg6" />
+=======
+  <component name="ProjectId" id="1uQYW90XPnYWNy64IW2ZIIbdSo5" />
+>>>>>>> main
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -40,6 +50,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+<<<<<<< HEAD
     <property name="WebServerToolWindowFactoryState" value="true" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
@@ -48,10 +59,21 @@
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+=======
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+>>>>>>> main
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
+<<<<<<< HEAD
       <changelist id="a70b39b6-532b-45ec-ae22-eb6aee8ff9e6" name="Default Changelist" comment="" />
       <created>1624943600203</created>
       <option name="number" value="Default" />
@@ -61,16 +83,37 @@
       <workItem from="1625211336951" duration="4646000" />
       <workItem from="1625219219940" duration="4015000" />
       <workItem from="1625226285644" duration="6392000" />
+=======
+      <changelist id="52381f1a-7d91-4fa4-aa26-4a1ca4343a9f" name="Default Changelist" comment="" />
+      <created>1624599309617</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1624599309617</updated>
+      <workItem from="1624599312743" duration="23092000" />
+>>>>>>> main
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+<<<<<<< HEAD
   <component name="WindowStateProjectService">
     <state x="349" y="173" key="SettingsEditor" timestamp="1625219060366">
       <screen x="0" y="25" width="1680" height="1025" />
     </state>
     <state x="349" y="173" key="SettingsEditor/0.25.1680.1025@0.25.1680.1025" timestamp="1625219060366" />
+=======
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+>>>>>>> main
   </component>
 </project>
