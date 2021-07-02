@@ -103,9 +103,6 @@ for data_path in data_paths:
     merge_data(data_path, gvkey_path)
 
 data_paths = [r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\test" + str(i) + "new.csv" for i in range(2007, 2021)]
-for data_path in data_paths:
-    # data_path = data_paths[0]
-    data = pd.read_csv(data_path)
-    data.columns
+
 
 
