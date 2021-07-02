@@ -7,8 +7,16 @@
       <change afterPath="$PROJECT_DIR$/panjiva_code/make_attribute.py" afterDir="false" />
 =======
     <list default="true" id="52381f1a-7d91-4fa4-aa26-4a1ca4343a9f" name="Default Changelist" comment="">
+<<<<<<< HEAD
       <change afterPath="$PROJECT_DIR$/panjiva_code/Query02.sql" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/panjiva_code/agg_data.py" afterDir="false" />
+>>>>>>> main
+=======
+      <change afterPath="$PROJECT_DIR$/panjiva_code/runcode.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/name_matching.py" beforeDir="false" afterPath="$PROJECT_DIR$/panjiva_code/name_matching.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/panjiva_code/agg_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/panjiva_code/agg_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/panjiva_code/get_sql_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/panjiva_code/get_sql_data.py" afterDir="false" />
 >>>>>>> main
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -89,7 +97,11 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1624599309617</updated>
+<<<<<<< HEAD
       <workItem from="1624599312743" duration="23092000" />
+>>>>>>> main
+=======
+      <workItem from="1624599312743" duration="82159000" />
 >>>>>>> main
     </task>
     <servers />
