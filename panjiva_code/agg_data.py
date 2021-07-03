@@ -3,7 +3,7 @@ import warnings
 import re
 import numpy as np
 import datetime
-
+from toolkit.scale import mad
 warnings.filterwarnings('ignore')
 
 
@@ -17,6 +17,7 @@ class FA():
         self.sample = False
         self.set_attribute()
         self.read_data()
+        self.calculate()
 
     def set_attribute(self):
         self.year_list = []
@@ -31,6 +32,7 @@ class FA():
                             "valueofgoodsusd",
                             "gv_conprt"]
         self.GSS = {}
+        self.save_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\savings"
 
     def calculate(self):
         GSS = self.GSS
@@ -47,10 +49,12 @@ class FA():
         output = pd.merge(GSS["GL"], GSS["SC"], on=["year", "gvkey"], how="left")
         output = pd.merge(output, GSS["RS"], on=["year", "gvkey"], how="left")
         output = pd.merge(output, GSS["LE"], on=["year", "gvkey"], how="left")
+        output = output.apply(mad, axis=0, args=(20, ))
         output = pd.merge(output, fdmk, on=["year", "gvkey"], how="left")
 
         # GSS = pd.DataFrame(self.GSS)
         self.output = output
+        output.to_csv(self.save_path + r"\variables_mk.csv")
         return output
 
     def form_hscode(self, hscode):
@@ -192,7 +196,7 @@ class FA():
             GL.columns = ["gvkey", "GL", "year"]
             GL.set_index(["gvkey", "year"])
             GL = pd.merge(GL, COGS, on=["gvkey", "year"], how="left")
-            GL["GL"] = GL["GL"] / GL["cogs"]
+            GL["GL"] = GL["GL"] / GL["cogs"] / 100
             GL = GL.drop("cogs", axis=1)
 
             if i == 0:
@@ -256,3 +260,5 @@ class FA():
         LE_total.set_index(["gvkey", "year"])
         print("LE\n", LE_total["LE"].describe())
         self.GSS["LE"] = LE_total
+
+fa = FA()
