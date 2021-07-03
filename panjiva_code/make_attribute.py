@@ -1,19 +1,18 @@
-import re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-sns.set_theme(style="whitegrid")
+# sns.set_theme(style="whitegrid")
 import warnings
 warnings.filterwarnings("ignore")
-from scipy.stats.mstats import winsorize
+import datetime
 # pd.set_option('display.max_columns', None)
 # pd.set_option('display.max_rows', None)
 
-data_path = r"/Users/meron/Desktop/01_Work/panjiva_data/compustat.csv"
+# data_path = r"/Users/meron/Desktop/01_Work/panjiva_data/compustat.csv"
 # data = pd.read_csv(data_path, index_col=["gvkey", "datadate"])
 
-from sklearn.preprocessing import MinMaxScaler
+from toolkit.scale import mad
 
 def plot(ser):
     # plt.hist(ser)
@@ -29,11 +28,11 @@ def plot(ser):
 class Get_Attribute():
 
     def __init__(self):
-        self.data_path = r"/Users/meron/Desktop/01_Work/panjiva_data/compustat.csv"
+        self.data_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\compustat.csv"
 
 
     def read_data(self):
-        self.data = pd.read_csv(data_path, index_col=["gvkey", "datadate"])
+        self.data = pd.read_csv(self.data_path, index_col=["gvkey", "datadate"])
         # sample = data.sample(1000)
 
     def get_attribute(self):
@@ -70,24 +69,7 @@ class Get_Attribute():
         self.attribute = attribute
 
 
-def three_sigma(series, n:int):
-    mean = series.mean()
-    std = series.std()
-    max_range = mean + n * std
-    min_range = mean - n * std
-    return np.clip(series, min_range, max_range)
 
-def percentile(series, min= 0.025, max= 0.975):
-    series = series.sort_values()
-    q = series.quantile([min, max])
-    return np.clip(series, q.iloc[0], q.iloc[-1])
-
-def mad(series, n=3):
-    median = series.quantile(0.5)
-    diff_median = ((series - median).abs()).quantile(0.5)
-    max_range = median + n * diff_median
-    min_range = median - n * diff_median
-    return np.clip(series, min_range, max_range)
 
 
 gt = Get_Attribute()
@@ -96,9 +78,10 @@ gt.get_attribute()
 attr = gt.attribute
 attr = attr.replace([np.inf, -np.inf], np.nan)
 attr = attr.dropna(how='any', axis=0).apply(mad, axis=0, args=(20,))
-attr_desc = attr.describe()
+attr = attr.reset_index(level=[0,1])
+attr["year"] = pd.to_datetime(attr["datadate"], format='%Y%m%d').dt.year
+attr.to_csv(r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\fundamental_mk.csv", index=False)
 
-attr = attr.apply(three_sigma, axis=0, args=(3, ))
-attr_scale = attr.apply(percentile, axis=0, args=(0.1, 0.9))
-attr = winsorize(attr, limits=[0.1, 0.2])
 
+
+attr = pd.read_csv(r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\fundamental_mk.csv", index_col=["gvkey", "year"])

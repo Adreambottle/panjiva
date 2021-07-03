@@ -2,11 +2,9 @@ import pandas as pd
 import warnings
 import re
 import numpy as np
+import datetime
 
 warnings.filterwarnings('ignore')
-
-
-
 
 
 class FA():
@@ -16,21 +14,44 @@ class FA():
 
     def __init__(self):
 
-        self.sample = True
+        self.sample = False
         self.set_attribute()
+        self.read_data()
 
     def set_attribute(self):
         self.year_list = []
         self.data_list = []
         self.column_name = ['index', 'panjivarecordid', 'arrivaldate', 'conciqcompanyid',
-                            'conultcompanyid', 'shpmtorigin', 'shpciqcompanyid', 'shpultcompanyid',
+                            'gv_conprt', 'shpmtorigin', 'shpciqcompanyid', 'shpultcompanyid',
                             'quantity_num', 'unit', 'weightkg', 'valueofgoodsusd', 'hscode',
                             'gv_con', 'gv_conprt', 'gv_shp', 'gv_shpprt']
-        self.drop_na_col = ["conultcompanyid",
+        self.drop_na_col = ["gv_conprt",
                             "shpciqcompanyid",
                             "hscode",
                             "valueofgoodsusd",
                             "gv_conprt"]
+        self.GSS = {}
+
+    def calculate(self):
+        GSS = self.GSS
+        self.get_GL()
+        self.get_SC()
+        self.get_RS()
+        self.get_LE()
+
+        fdmk_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\fundamental_mk.csv"
+        fdmk = pd.read_csv(fdmk_path)
+        fdmk["year"] = pd.to_datetime(fdmk["year"], format="%Y")
+
+
+        output = pd.merge(GSS["GL"], GSS["SC"], on=["year", "gvkey"], how="left")
+        output = pd.merge(output, GSS["RS"], on=["year", "gvkey"], how="left")
+        output = pd.merge(output, GSS["LE"], on=["year", "gvkey"], how="left")
+        output = pd.merge(output, fdmk, on=["year", "gvkey"], how="left")
+
+        # GSS = pd.DataFrame(self.GSS)
+        self.output = output
+        return output
 
     def form_hscode(self, hscode):
         hscode = re.split(':', str(hscode))[-1][:6]
@@ -43,6 +64,8 @@ class FA():
         return data
 
     def read_data(self):
+        gv_pj_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\gvkey_panjiva.csv"
+
         if self.sample == True:
             self.year_list = [2018, 2019]
             self.data_paths = [r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\sample\2018.csv",
@@ -63,19 +86,20 @@ class FA():
                 data = self.form_data(data)
                 self.data_list.append(data)
 
-
     def get_SC(self):
         print("Calculating SC\n")
         SC_list = []
         for i, year in enumerate(self.year_list):
             print(f"Processing data on year {year}\n")
             data = self.data_list[i]
-            IVj = data.groupby(['conultcompanyid',
-                                'hscode',
-                                'shpciqcompanyid']).agg({'valueofgoodsusd': 'sum'})
+            IVj = data.groupby([
+                'gv_conprt',
+                'hscode',
+                'shpciqcompanyid']).agg({'valueofgoodsusd': 'sum'})
 
-            IV = data.groupby(['conultcompanyid',
-                               'hscode']).agg({'valueofgoodsusd': 'sum'})
+            IV = data.groupby([
+                'gv_conprt',
+                'hscode']).agg({'valueofgoodsusd': 'sum'})
             HI = IVj / IV
             HI = HI * HI
             HI = HI.sum(level=[0, 1])
@@ -83,13 +107,18 @@ class FA():
             numerator = numerator.sum(level=0)
             denominator = IV.sum(level=0)
             SC = numerator / denominator
+            SC["year"] = datetime.datetime.strptime(str(year), "%Y")
 
             if i == 0:
                 SC_total = SC
             else:
                 SC_total = pd.concat([SC_total, SC], axis=0)
 
-        print("SC\n", SC_total.describe())
+        SC_total = SC_total.reset_index(level=0)
+        SC_total.columns = ["gvkey", "SC", "year"]
+        SC_total.set_index(["gvkey", "year"])
+        print("SC\n", SC_total["SC"].describe())
+        self.GSS["SC"] = SC_total
 
     def get_RS(self):
 
@@ -99,13 +128,13 @@ class FA():
             data = self.data_list[i]
             data["arrivaldate"] = pd.to_datetime(data["arrivaldate"])
             data["arrivalmonth"] = data["arrivaldate"].dt.month
-            gb_supplier = data.groupby(['conultcompanyid',
+            gb_supplier = data.groupby(['gv_conprt',
                                         'hscode',
                                         'shpciqcompanyid']).agg({'arrivalmonth': 'count'})
 
-            gb_no_supplier = data.groupby(['conultcompanyid',
+            gb_no_supplier = data.groupby(['gv_conprt',
                                            'hscode']).agg({'arrivalmonth': 'sum'})
-            IV = data.groupby(['conultcompanyid',
+            IV = data.groupby(['gv_conprt',
                                'hscode']).agg({'valueofgoodsusd': 'sum'})
             RBI = gb_supplier / gb_no_supplier
             RBI = RBI.mean(level=[0, 1])
@@ -115,28 +144,38 @@ class FA():
             numernator = numernator.sum(level=0)
             denominator = IV.sum(level=0)
             RS = numernator / denominator
+            RS["year"] = datetime.datetime.strptime(str(year), "%Y")
 
             if i == 0:
                 RS_total = RS
             else:
                 RS_total = pd.concat([RS_total, RS], axis=0)
 
-        print("RS\n", RS_total.describe())
+        RS_total = RS_total.reset_index(level=0)
+        RS_total.columns = ["gvkey", "RS", "year"]
+        RS_total.set_index(["gvkey", "year"])
+
+        print("RS\n", RS_total["RS"].describe())
+        self.GSS["RS"] = RS_total
 
     def get_GL(self):
+        COGS_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\compustat.csv"
+        COGS = pd.read_csv(COGS_path,
+                           usecols=["gvkey", "fyear", "cogs"])
+        COGS["year"] = pd.Series(COGS["fyear"], dtype=int)
+        COGS = COGS.drop(["fyear"], axis=1)
+
+        shipment_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\Shiptime.xlsx"
+        shipment = pd.read_excel(shipment_path).loc[:, ["Country", "Shiptime"]]
+        shipment["Country"] = shipment["Country"].str.lower()
+        shipment.columns = ['shpmtorigin', "Shiptime"]
 
         print(f"Calculating GL\n")
         for i, year in enumerate(self.year_list):
             print(f"Processing data on year {year}\n")
 
-            shipment_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\Shiptime.xlsx"
-            shipment = pd.read_excel(shipment_path).loc[:, ["Country", "Shiptime"]]
-            shipment["Country"] = shipment["Country"].str.lower()
-            shipment.columns = ['shpmtorigin', "Shiptime"]
-
-
             data = self.data_list[i]
-            IVj = data.groupby(['conultcompanyid',
+            IVj = data.groupby(['gv_conprt',
                                 'shpmtorigin']).agg({'valueofgoodsusd': 'sum'})
             IVj_index = IVj.index
             IVj = pd.merge(IVj, shipment, on="shpmtorigin", how="left")
@@ -147,16 +186,23 @@ class FA():
             denominator = IVj.loc[:, ["Shiptime"]].sum(level=0)
             denominator.columns = ["value"]
             GL = numerator / denominator
-            COGS = data.groupby('conultcompanyid').agg({'valueofgoodsusd': 'sum'})
-            COGS.columns = ["value"]
-            GL = 100 * GL / COGS
+            GL["year"] = year
+
+            GL = GL.reset_index(level=0)
+            GL.columns = ["gvkey", "GL", "year"]
+            GL.set_index(["gvkey", "year"])
+            GL = pd.merge(GL, COGS, on=["gvkey", "year"], how="left")
+            GL["GL"] = GL["GL"] / GL["cogs"]
+            GL = GL.drop("cogs", axis=1)
 
             if i == 0:
                 GL_total = GL
             else:
                 GL_total = pd.concat([GL_total, GL], axis=0)
-
-        print("GL\n", GL_total.describe())
+        GL_total["year"] = pd.to_datetime(GL_total["year"], format="%Y")
+        GL_total.set_index(["gvkey", "year"])
+        print("GL\n", GL_total["GL"].describe())
+        self.GSS["GL"] = GL_total
 
     def get_LE(self):
 
@@ -182,7 +228,7 @@ class FA():
             LPI.columns = ["shpmtorigin", "score"]
 
             data = self.data_list[i]
-            IVj = data.groupby(['conultcompanyid',
+            IVj = data.groupby(['gv_conprt',
                                 'hscode',
                                 'shpmtorigin']).agg({'valueofgoodsusd': 'sum'})
             IVj_m = pd.merge(IVj, LPI, on='shpmtorigin', how='left')
@@ -192,17 +238,21 @@ class FA():
             LEc_denom = IVj.sum(level=[0, 1])
             LEc_denom.columns = ["value"]
             LEc = LEc_numer / LEc_denom
-            IV = data.groupby(['conultcompanyid',
+            IV = data.groupby(['gv_conprt',
                                'hscode']).agg({'valueofgoodsusd': 'sum'})
             IV.columns = ["value"]
             numerator = IV * LEc
             numerator = numerator.sum(level=0)
             denominator = IV.sum(level=0)
             LE = numerator / denominator
+            LE["year"] = datetime.datetime.strptime(str(year), "%Y")
 
             if i == 0:
                 LE_total = LE
             else:
                 LE_total = pd.concat([LE_total, LE], axis=0)
-
-        print("LE\n", LE_total.describe())
+        LE_total = LE_total.reset_index(level=0)
+        LE_total.columns = ["gvkey", "LE", "year"]
+        LE_total.set_index(["gvkey", "year"])
+        print("LE\n", LE_total["LE"].describe())
+        self.GSS["LE"] = LE_total
