@@ -35,8 +35,7 @@ def getICSeries(factor, ret, method):
     return ic_all
 
 
-
-def Group_Test_All_Factors_with_variance(factor, ret, groups, how="both"):
+def Group_Test_All_Factors_mean(factor, ret, groups, how="both"):
     """
      一次性测试多个因子
     :param factor: 储存所有 factor 的 DataFrame, index = [code, time]
@@ -49,15 +48,11 @@ def Group_Test_All_Factors_with_variance(factor, ret, groups, how="both"):
     # groups = 5
 
     f_names = factor.columns  # 因子的名字
-    f_all = pd.merge(factor, ret,  # 包括了 factor 和 return 的 total data
-                     left_on=['gvkey', 'year'],
-                     right_on=['gvkey', 'year'])
+    f_all = pd.merge(factor, ret, on=['gvkey', 'year'], how="inner")
 
     Group_ret_dict = {}
-    Group_ret_mean_EW = []  # 用于储存多个 factor 在不同组别上的 return
-    Group_ret_std_EW = []
-    Group_ret_mean_VW = []
-    Group_ret_std_VW = []
+    Group_ret_EW = []  # 用于储存多个 factor 在不同组别上的 return
+    Group_ret_VW = []
 
     for f in f_names:  # f = f_names[2]
 
@@ -74,53 +69,48 @@ def Group_Test_All_Factors_with_variance(factor, ret, groups, how="both"):
 
             # result 再次按照 时间 和 组别 将股票重新分组
             if (how == "both") or (how == "EW"):
-                result_mean_EW = f_use.groupby(['year', 'groups'])['return_rate'].mean()
-                result_std_EW = f_use.groupby(['year', 'groups'])['return_rate'].std()
-                # result_mean_EW = f_use.groupby(['year', 'groups']).apply(lambda x: x['return_rate'].mean())
+                result_EW = f_use.groupby(['year', 'groups'])['return_rate'].mean()
+                # result_EW = f_use.groupby(['year', 'groups']).apply(lambda x: x['return_rate'].mean())
 
                 # 将按照【时间】 gb 后分组的 Series 重新拼接成 DataFrame
-                result_mean_EW = result_mean_EW.unstack().reset_index()
-                result_std_EW = result_std_EW.unstack().reset_index()
+                result_EW = result_EW.unstack().reset_index()
 
-                result_mean_EW.insert(0, 'factor', f)
-                result_std_EW.insert(0, 'factor', f)
+                result_EW.insert(0, 'factor', f)
 
-                Group_ret_mean_EW.append(result_mean_EW)
-                Group_ret_std_EW.append(result_std_EW)
+                Group_ret_EW.append(result_EW)
 
             if (how == "both") or (how == "VW"):
-                result_mean_VW = f_use.groupby(['year', 'groups']).apply(
-                    lambda x: x["return_rate"] * x["adj_close"] / sum(x["adj_close"]))
+                f_use['wgt'] = f_use.groupby(['year', 'groups'])['adj_close'].transform(lambda x: x / x.sum())
+                f_use['result'] = f_use['return_rate'] * f_use["wgt"]
+                result_VW = f_use.groupby(['year', 'groups'])['result'].sum()
 
-                result_std_VW = f_use.groupby(['year', 'groups'])['return_rate'].std()
+                result_VW = result_VW.unstack().reset_index()
 
-                # 将按照【时间】 gb 后分组的 Series 重新拼接成 DataFrame
-                result_mean_VW = result_mean_VW.unstack().reset_index()
-                result_std_VW = result_std_VW.unstack().reset_index()
+                result_VW.insert(0, 'factor', f)
 
-                result_mean_VW.insert(0, 'factor', f)
-                result_std_VW.insert(0, 'factor', f)
-
-                Group_ret_mean_VW.append(result_mean_VW)
-                Group_ret_std_VW.append(result_std_VW)
+                Group_ret_VW.append(result_VW)
 
     if (how == "both") or (how == "EW"):
-        Group_ret_mean_EW = pd.concat(Group_ret_mean_EW, axis=0).reset_index(drop=True)
-        cum_mean_EW = Group_ret_mean_EW.iloc[:, 2:].groupby(Group_ret_mean_EW['factor']).apply(
-            lambda x: (1 + x).cumprod())
+        Group_ret_EW = pd.concat(Group_ret_EW, axis=0).reset_index(drop=True)
+        cum_EW = Group_ret_EW.iloc[:, 2:].groupby(Group_ret_EW['factor']).apply(np.mean)
+        cum_EW = cum_EW.groupby('factor').apply(np.mean)
         # Group_cum_return = Group_ret.iloc[:, 2:].groupby(Group_ret.factor).apply(lambda x: (1 + x).cumprod())
 
         # 将 cumprod 之后的 return 添加 【time】【code】两个 index
-        cum_mean_EW = pd.concat([Group_ret_mean_EW[['year', 'factor']], cum_mean_EW], axis=1)
-        Group_ret_dict["EW"] = cum_mean_EW
+        # cum_EW = pd.concat([Group_ret_EW[['year', 'factor']], cum_EW], axis=1)
+        # cum_EW["H-L"] = cum_EW.iloc[:,2] - cum_EW.iloc[:,groups+1]
+
+        Group_ret_dict["EW"] = cum_EW
 
     if (how == "both") or (how == "VW"):
         Group_ret_VW = pd.concat(Group_ret_VW, axis=0).reset_index(drop=True)
-        cum_VW = Group_ret_VW.iloc[:, 2:].groupby(Group_ret_VW['factor']).apply(lambda x: (1 + x).cumprod())
-        # Group_cum_return = Group_ret.iloc[:, 2:].groupby(Group_ret.factor).apply(lambda x: (1 + x).cumprod())
+        cum_VW = Group_ret_VW.iloc[:, 2:].groupby(Group_ret_VW['factor']).apply(np.mean)
+        cum_VW = cum_VW.groupby('factor').apply(np.mean)
 
-        # 将 cumprod 之后的 return 添加 【time】【code】两个 index
-        cum_VW = pd.concat([Group_ret_VW[['year', 'factor']], cum_VW], axis=1)
+        # cum_VW = pd.concat([Group_ret_VW[['year', 'factor']], cum_VW], axis=1)
+        # cum_VW["H-L"] = cum_VW.iloc[:,2] - cum_VW.iloc[:,groups+1]
+
+
         Group_ret_dict["VW"] = cum_VW
 
     return Group_ret_dict
@@ -188,7 +178,8 @@ def Group_Test_All_Factors(factor, ret, groups, how="both"):
 
         # 将 cumprod 之后的 return 添加 【time】【code】两个 index
         cum_EW = pd.concat([Group_ret_EW[['year', 'factor']], cum_EW], axis=1)
-        cum_EW["H-L"] = cum_EW.iloc[:,2] - cum_EW.iloc[:,groups+1]
+        cum_EW["H-L"] = cum_EW.iloc[:, 2] - cum_EW.iloc[:, groups + 1]
+        cum_EW = cum_EW.round(2)
         Group_ret_dict["EW"] = cum_EW
 
     if (how == "both") or (how == "VW"):
@@ -196,7 +187,8 @@ def Group_Test_All_Factors(factor, ret, groups, how="both"):
         cum_VW = Group_ret_VW.iloc[:, 2:].groupby(Group_ret_VW['factor']).apply(lambda x: (1 + x).cumprod())
 
         cum_VW = pd.concat([Group_ret_VW[['year', 'factor']], cum_VW], axis=1)
-        cum_VW["H-L"] = cum_VW.iloc[:,2] - cum_VW.iloc[:,groups+1]
+        cum_VW["H-L"] = cum_VW.iloc[:, 2] - cum_VW.iloc[:, groups + 1]
+        cum_VW = cum_VW.round(3)
 
         Group_ret_dict["VW"] = cum_VW
 
@@ -296,6 +288,7 @@ def cls_mktcap():
     mktcap_data = mktcap_data.loc[:, ["gvkey", "year", "mkvalt"]]
     return mktcap_data
 
+
 def cls_sic():
     sic_path = "/Users/meron/Desktop/01_Work/panjiva_data/gvkey_sic.csv"
     sic_data = pd.read_csv(sic_path)
@@ -304,9 +297,9 @@ def cls_sic():
 
     sic_sub_data = {}
 
-    sic_sub_data["Retailers"] = sic_data[(sic_data['sic']>5200) & (sic_data['sic']<5999)]
-    sic_sub_data["Wholesalers"] = sic_data[(sic_data['sic']>5000) & (sic_data['sic']<5199)]
-    sic_sub_data["Manufacturers"] = sic_data[(sic_data['sic']>2000) & (sic_data['sic']<3999)]
+    sic_sub_data["Retailers"] = sic_data[(sic_data['sic'] > 5200) & (sic_data['sic'] < 5999)]
+    sic_sub_data["Wholesalers"] = sic_data[(sic_data['sic'] > 5000) & (sic_data['sic'] < 5199)]
+    sic_sub_data["Manufacturers"] = sic_data[(sic_data['sic'] > 2000) & (sic_data['sic'] < 3999)]
 
     return sic_sub_data
 
@@ -318,15 +311,103 @@ def ols_coef(x, y):
     return sm.OLS(y, sm.add_constant(x), missing='drop').fit().params
 
 
-
-def  fama_macbeth(factor, ret):
+def fama_macbeth(factor, ret=None):
     # fama_macbath
-    f_all = pd.merge(factor, ret, on=['gvkey', 'year'], how="inner")
-    f_all = f_all.set_index(['gvkey', 'year'])
-    fm = FamaMacBeth(dependent=f_all['return_rate'],
-                     exog=sm.add_constant(f_all[['GL', 'SC', 'RS', 'LE']]))
-    res_fm = fm.fit(debiased=False)
+    if ret != None:
+        f_all = pd.merge(factor, ret, on=['gvkey', 'year'], how="inner")
 
+    else:
+        f_all = factor.set_index(['gvkey', 'year'])
+
+        fm = FamaMacBeth(dependent=f_all['return_rate'],
+                         exog=sm.add_constant(f_all[[]]))
+        res_fm = fm.fit(debiased=False)
+
+
+def OLS_test(data):
+    X = sm.add_constant(data.iloc[:, [2, 3]], has_constant='add')
+    y = data.loc[:, "return_rate"]
+    model = sm.OLS(y, X).fit()
+    return model.params[0]
+
+
+# def cross_sectional_test(factor, ret, groups):
+#     # factor = factor_data.copy()
+#     # ret = ret_single.copy()
+#     # groups = 4
+#
+#
+#     f_all = pd.merge(factor, ret, on=['gvkey', 'year'], how="left")
+#     ccc = build_ccc()
+#     f_all = pd.merge(f_all, ccc, on=['gvkey', 'year'], how='left')
+#     f_all = f_all.dropna(how="any")
+#     fu_names = ['Size', 'BM',
+#        'GPM', 'Leverage', 'Accruals', 'InvI', 'InvT', 'GMROI', 'CAPEXI',
+#        'RDI', 'ccc']
+#     ft_names = ['GL', 'RS', 'LE']
+#
+#     ft_dict = {}
+#     for ft in ft_names:
+#
+#         fu_dict = {}
+#         for fu in fu_names:
+#             # ft = "GL"
+#             # fu = "Size"
+#             print(ft, fu)
+#             f_use = f_all.loc[:, ["year", "gvkey", ft, fu, "return_rate"]]
+#             f_use['groups'] = f_use.groupby("year")[ft].apply(lambda x: np.ceil(x.rank() / (len(x) / groups)))
+#             f_alphas = []
+#             for level in range(1, groups+1):
+#                 # level = 1
+#                 f_sub = f_use[f_use['groups'] == level]
+#                 alpha = OLS_test(f_sub)
+#                 f_alphas.append(alpha)
+#                 fu_dict[fu] = f_alphas
+#             fu_df = pd.DataFrame(fu_dict).T
+#             # fu_df.columns = [1, 2, 3, 4]
+#             fu_df["H-L"] = fu_df.iloc[:,0] - fu_df.iloc[:,3]
+#         ft_dict[ft] = fu_df
+#     return ft_dict
+
+
+def cross_sectional_test(factor, ret, groups):
+    # factor = factor_data.copy()
+    # ret = ret_single.copy()
+    # groups = 4
+
+    f_all = pd.merge(factor, ret, on=['gvkey', 'year'], how="left")
+    ccc = build_ccc()
+    f_all = pd.merge(f_all, ccc, on=['gvkey', 'year'], how='left')
+    f_all = f_all.dropna(how="any")
+    fu_names = ['Size', 'BM',
+                'GPM', 'Leverage', 'Accruals', 'InvI', 'InvT', 'GMROI', 'CAPEXI',
+                'RDI', 'ccc']
+    ft_names = ['GL', 'RS', 'LE']
+
+    ft_dict = {}
+    for ft in ft_names:
+
+        fu_dict = {}
+        for fu in fu_names:
+            # ft = "GL"
+            # fu = "Size"
+            print(ft, fu)
+            f_use = f_all.loc[:, ["year", "gvkey", ft, fu, "return_rate"]]
+
+            fama_macbeth(f_use)
+            f_use['groups'] = f_use.groupby("year")[ft].apply(lambda x: np.ceil(x.rank() / (len(x) / groups)))
+            f_alphas = []
+            for level in range(1, groups + 1):
+                # level = 1
+                f_sub = f_use[f_use['groups'] == level]
+                alpha = OLS_test(f_sub)
+                f_alphas.append(alpha)
+                fu_dict[fu] = f_alphas
+            fu_df = pd.DataFrame(fu_dict).T
+            # fu_df.columns = [1, 2, 3, 4]
+            fu_df["H-L"] = fu_df.iloc[:, 0] - fu_df.iloc[:, groups - 1]
+        ft_dict[ft] = fu_df
+    return ft_dict
 
 
 def main():
@@ -335,7 +416,7 @@ def main():
     :return:
     """
     factor_path = r"/Users/meron/Desktop/01_Work/panjiva_data/factor.csv"
-    factor_data = pd.read_csv(factor_path)
+    factor_data = pd.read_csv(factor_path, index_col=0)
     factor_data['year'] = pd.to_datetime(factor_data['year'], format="%Y-%m-%d")
 
     GSS = factor_data.loc[:, ['gvkey', 'year', 'GL', 'SC', 'RS', 'LE']]
@@ -348,20 +429,12 @@ def main():
     ret_single = return_data.loc[:, ['gvkey', 'year', 'return_rate']]
     ret_complex = return_data.loc[:, ['gvkey', 'year', 'return_rate', 'adj_close']]
 
-
-
-
-
-
     # group_test 单因子
-    Group_cum_return = Group_Test_All_Factors(factor=GSS, ret=ret_complex, groups=10, how='both')
+    Group_cum_return = Group_Test_All_Factors_mean(factor=GSS, ret=ret_complex, groups=5, how='both')
 
     logging_path = r"./logger/"
     for k, v in Group_cum_return.items():
-        v.to_csv(logging_path + f"Group_test_{k}.csv")
-
-
-
+        v.to_csv(logging_path + f"Group_test_mean_{k}.csv")
 
     # double sort 测试因子的部分
     GSS_dt = factor_data.loc[:, ['gvkey', 'year', 'GL', 'SC', 'RS', 'LE', 'InvT']]
@@ -378,8 +451,6 @@ def main():
                 print("\nmean\n", ds_mean, file=logging)
                 print("\nstandard error\n", ds_std, file=logging)
 
-
-
     # 进行 SIC 分类的时候
     sic_data = cls_sic()
     for industry, data in sic_data.items():
@@ -391,22 +462,69 @@ def main():
         for k, v in cum_return.items():
             v.to_csv(logging_path + f"SIC_test_on_{industry}_{k}.csv")
 
-
-
     # 进行 mktcap 分类的时候
     mktcap_data = cls_mktcap()
     GSS_data = pd.merge(GSS, mktcap_data, on=['gvkey', 'year'], how='left').copy()
     GSS_data = GSS_data.dropna(subset=["mkvalt"])
-    GSS_data["mkvalt"] = GSS_data["mkvalt"].groupby(GSS_data.year).apply(lambda x: np.ceil(x.rank() / (len(x)/2)))
-    GSS_data_s = GSS_data[GSS_data["mkvalt"]==1]
-    cum_return_s = Group_Test_All_Factors(factor=GSS_data_s, ret=ret_complex, groups=5, how='both')
+    GSS_data["mkvalt"] = GSS_data["mkvalt"].groupby(GSS_data.year).apply(lambda x: np.ceil(x.rank() / (len(x) / 2)))
+    GSS_data_s = GSS_data[GSS_data["mkvalt"] == 1]
+    cum_return_s = Group_Test_All_Factors(factor=GSS_data_s, ret=ret_complex, groups=3, how='both')
     logging_path = r"./logger/"
     for k, v in cum_return_s.items():
         v.to_csv(logging_path + f"Diff_MktCap_Small_{k}.csv")
 
-    GSS_data_l = GSS_data[GSS_data["mkvalt"]==2]
-    cum_return_l = Group_Test_All_Factors(factor=GSS_data_l, ret=ret_complex, groups=5, how='both')
+    GSS_data_l = GSS_data[GSS_data["mkvalt"] == 2]
+    cum_return_l = Group_Test_All_Factors(factor=GSS_data_l, ret=ret_complex, groups=3, how='both')
     for k, v in cum_return_l.items():
         v.to_csv(logging_path + f"Diff_MktCap_Large_{k}.csv")
 
+    # cross_sectional test
+    logging_path = r"./logger/"
+    cs_dict = cross_sectional_test(factor=factor_data, ret=ret_single, groups=4)
+    for k, v in cs_dict.items():
+        v.to_csv(logging_path + f"cross_sectional_{k}.csv")
 
+    paths = ["/Users/meron/Desktop/01_Work/panjiva/logger/Diff_MktCap_Small_EW.csv",
+            "/Users/meron/Desktop/01_Work/panjiva/logger/Diff_MktCap_Small_VW.csv",
+            "/Users/meron/Desktop/01_Work/panjiva/logger/Diff_MktCap_Large_EW.csv",
+            "/Users/meron/Desktop/01_Work/panjiva/logger/Diff_MktCap_Large_VW.csv"]
+
+    i = 0
+    for SL in ["Small", "Large"]:
+        for EV in ["EW", "VW"]:
+            path = f"/Users/meron/Desktop/01_Work/panjiva/logger/Diff_MktCap_{SL}_{EV}.csv"
+            data = pd.read_csv(path, index_col=0)
+            result = data.groupby('factor').apply(np.mean)
+            result["Small/Lage"] = SL
+            result["EW/VW"] = EV
+            if i == 0:
+                result_total = result
+            else:
+                result_total = pd.concat([result_total, result])
+            i += 1
+
+    result_total = result_total.reset_index().sort_values(['factor', 'EW/VW', 'Small/Lage']).set_index(['factor', 'EW/VW', 'Small/Lage'])
+    result_total.to_csv("/Users/meron/Desktop/01_Work/panjiva/logger/Diff_MktCap.csv")
+
+
+    data.to_csv("/Users/meron/Desktop/01_Work/panjiva/logger/Table_3.csv")
+
+    GSS = GSS.dropna()
+    GSS_u = GSS.loc[:, ["GL", "SC", "LE", "RS"]]
+    GSS_u["GL"] = GSS_u["GL"]/10
+    GSS_u["RS"] = GSS_u["RS"]*2
+
+    result = GSS_u.describe()
+    result.T.to_csv("/Users/meron/Desktop/01_Work/panjiva/logger/Table_1A.csv")
+    GSS_u.corr('spearman')
+
+    corr = factor_data.corr('spearman')
+    corr.to_csv("/Users/meron/Desktop/01_Work/panjiva/logger/Table_1B.csv")
+
+    factor_data.columns
+    f_u = factor_data.loc[:, ['Size', 'BM',
+       'GPM', 'Leverage', 'Accruals', 'InvI', 'InvT', 'GMROI', 'CAPEXI',
+       'RDI']]
+
+    result = f_u.describe()
+    result.to_csv("/Users/meron/Desktop/01_Work/panjiva/logger/Table_1.csv")
