@@ -195,6 +195,91 @@ def Group_Test_All_Factors(factor, ret, groups, how="both"):
     return Group_ret_dict
 
 
+
+
+
+def Group_Test_All_Factors(factor, ret, groups, how="both"):
+    """
+     一次性测试多个因子
+    :param factor: 储存所有 factor 的 DataFrame, index = [code, time]
+    :param ret: 储存股票收益率的 DataFrame, index = [code, time]
+    :param groups: 分成多少组来测
+    :return: cumulative product return for stocks with different groups
+    """
+    # factor = GSS
+    # ret = ret_complex
+    # groups = 5
+
+    f_names = factor.columns  # 因子的名字
+    f_all = pd.merge(factor, ret, on=['gvkey', 'year'], how="inner")
+
+    Group_ret_dict = {}
+    Group_ret_EW = []  # 用于储存多个 factor 在不同组别上的 return
+    Group_ret_VW = []
+
+    for f in f_names:  # f = f_names[2]
+
+        # f 就是用于循环的各个 factor
+        if ((f != 'gvkey') & (f != 'year')):
+            # f = "RS"
+            # 按照 股票 时间 收益 因子 做为本次测试的子集
+            f_use = f_all[['gvkey', 'year', 'return_rate', 'adj_close', f]]
+            f_use = f_use.dropna(how='any')
+
+            # f_use['groups'] 是同一时间截面上 按照因子值分的组别
+            f_use['groups'] = f_use.groupby("year")[f].apply(lambda x: np.ceil(x.rank() / (len(x) / groups)))
+            # f_use['groups'] = f_use[f].groupby(f_use.year).apply(lambda x: np.ceil(x.rank() / (len(x) / groups)))
+
+            # result 再次按照 时间 和 组别 将股票重新分组
+            if (how == "both") or (how == "EW"):
+                result_EW = f_use.groupby(['year', 'groups'])['return_rate'].mean()
+                # result_EW = f_use.groupby(['year', 'groups']).apply(lambda x: x['return_rate'].mean())
+
+                # 将按照【时间】 gb 后分组的 Series 重新拼接成 DataFrame
+                result_EW = result_EW.unstack().reset_index()
+
+                result_EW.insert(0, 'factor', f)
+
+                Group_ret_EW.append(result_EW)
+
+            if (how == "both") or (how == "VW"):
+                f_use['wgt'] = f_use.groupby(['year', 'groups'])['adj_close'].transform(lambda x: x / x.sum())
+                f_use['result'] = f_use['return_rate'] * f_use["wgt"]
+                result_VW = f_use.groupby(['year', 'groups'])['result'].sum()
+
+                result_VW = result_VW.unstack().reset_index()
+
+                result_VW.insert(0, 'factor', f)
+
+                Group_ret_VW.append(result_VW)
+
+    if (how == "both") or (how == "EW"):
+        Group_ret_EW = pd.concat(Group_ret_EW, axis=0).reset_index(drop=True)
+        cum_EW = Group_ret_EW.iloc[:, 2:].groupby(Group_ret_EW['factor']).apply(lambda x: (1 + x).cumprod())
+        # Group_cum_return = Group_ret.iloc[:, 2:].groupby(Group_ret.factor).apply(lambda x: (1 + x).cumprod())
+
+        # 将 cumprod 之后的 return 添加 【time】【code】两个 index
+        cum_EW = pd.concat([Group_ret_EW[['year', 'factor']], cum_EW], axis=1)
+        cum_EW["H-L"] = cum_EW.iloc[:, 2] - cum_EW.iloc[:, groups + 1]
+        cum_EW = cum_EW.round(2)
+        Group_ret_dict["EW"] = cum_EW
+
+    if (how == "both") or (how == "VW"):
+        Group_ret_VW = pd.concat(Group_ret_VW, axis=0).reset_index(drop=True)
+        cum_VW = Group_ret_VW.iloc[:, 2:].groupby(Group_ret_VW['factor']).apply(lambda x: (1 + x).cumprod())
+
+        cum_VW = pd.concat([Group_ret_VW[['year', 'factor']], cum_VW], axis=1)
+        cum_VW["H-L"] = cum_VW.iloc[:, 2] - cum_VW.iloc[:, groups + 1]
+        cum_VW = cum_VW.round(3)
+
+        Group_ret_dict["VW"] = cum_VW
+
+    return Group_ret_dict
+
+
+
+
+
 def plotnav(Group_cum_return):
     """
     GroupTest作图
@@ -371,6 +456,7 @@ def OLS_test(data):
 
 
 def cross_sectional_test(factor, ret, groups):
+
     # factor = factor_data.copy()
     # ret = ret_single.copy()
     # groups = 4
