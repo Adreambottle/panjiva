@@ -8,7 +8,8 @@ GSS = factor.loc[:, ['gvkey', 'year', 'GL', 'SC', 'RS', 'LE']]
 factor_dna = factor.dropna(how="any")
 gvkey = factor_dna['gvkey']
 len(gvkey.unique())
-
+f1 = "RS"
+f2 = "ccc"
 f_use = factor.loc[:, ['gvkey', 'year', f1, f2]]
 
 len(f_use[(f_use['GL_r'] == 3)])

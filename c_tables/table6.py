@@ -6,7 +6,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-from toolkit.scale import mad
+from c_toolkit.scale import mad
 
 
 

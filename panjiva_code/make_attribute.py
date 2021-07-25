@@ -12,7 +12,7 @@ import datetime
 # data_path = r"/Users/meron/Desktop/01_Work/panjiva_data/compustat.csv"
 # data = pd.read_csv(data_path, index_col=["gvkey", "datadate"])
 
-from toolkit.scale import mad
+from c_toolkit.scale import mad
 
 def plot(ser):
     # plt.hist(ser)

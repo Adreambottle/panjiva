@@ -3,7 +3,7 @@ import warnings
 import re
 import numpy as np
 import datetime
-from toolkit.scale import mad
+from c_toolkit.scale import mad
 warnings.filterwarnings('ignore')
 
 

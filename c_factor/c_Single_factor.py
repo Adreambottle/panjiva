@@ -4,7 +4,7 @@ import statsmodels.api as sm
 import warnings
 warnings.filterwarnings('ignore')
 
-from toolkit.scale import mad
+from c_toolkit.scale import mad
 
 def OLS_test(data):
     X = sm.add_constant(data.iloc[:, [2, 3]], has_constant='add')

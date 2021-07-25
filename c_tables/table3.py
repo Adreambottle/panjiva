@@ -10,46 +10,30 @@ warnings.filterwarnings('ignore')
 
 
 
-def Single_factor(factor, ret, groups, f_name="RS", wgt="vw"):
-    """
-     一次性测试多个因子
-    :param factor: 储存所有 factor 的 DataFrame, index = [code, time]
-    :param ret: 储存股票收益率的 DataFrame, index = [code, time]
-    :param groups: 分成多少组来测
-    :return: cumulative product return for stocks with different groups
-    """
+def Single_factor(factor, ret, groups, f_name, wgt, all_c):
+
     # factor = GSS
     # f_name = "RS"
     # groups = 5
     # wgt = "vw"
-
+    print("Start")
     wgt = wgt + "r"
-    ret = return_data.loc[:, [wgt, 'gvkey', 'year', 'month']]
-
-    # f_all = pd.merge(factor, ret, on=['gvkey', 'year'], how="inner")
-    # f_all = pd.merge(factor, ret, on=['gvkey', 'year'], how="right")
-
+    ret = ret.loc[:, [wgt, 'gvkey', 'year', 'month']]
     year_list = factor['year'].unique()
-    group_list = range(1, groups + 1)
+
+    # group_list = range(1, groups+1)
+    group_list = [1, groups]
 
     f_use = factor[['gvkey', 'year', f_name]]
     f_use = f_use.dropna(how='any')
-
     f_use['groups'] = f_use.groupby("year")[f_name].apply(lambda x: np.ceil(x.rank() / (len(x) / groups)))
 
     val_y_p = {}
-
-    # y = year_list[0]
-    # g = group_list[0]
     for y in year_list:
-
         val_g_p = {}
-        # val_g_t = {}
-        print(y)
         for g in group_list:
-            print(g)
+            print(y, g)
 
-            # g = group_list[0]
             f_u_sub = f_use[(f_use['year'] == y) & (f_use['groups'] == g)]
             f_u_ttl = pd.DataFrame(np.repeat(f_u_sub.values, 12, axis=0))
             f_u_ttl.columns = f_u_sub.columns
@@ -77,11 +61,7 @@ def Single_factor(factor, ret, groups, f_name="RS", wgt="vw"):
     p_rslt = pd.concat([p_rslt, p_HL.T])
 
     p_df = p_rslt.mean(axis=1)
-
     t_df = p_rslt.apply(lambda x: stats.ttest_1samp(x, 0.0, nan_policy='omit')[0], axis=1)
-
-    # t_df = pd.DataFrame(val_y_t).mean(axis=1)
-
     result_df = pd.concat([p_df, t_df], axis=1).T
 
     print(result_df)
@@ -107,7 +87,7 @@ for f_name in ["GL", "SC", "LE", "RS"]:
     for wgt in ["vw", "ew"]:
 
 
-        rslt = Single_factor(GSS, return_data, 5, f_name, wgt)
+        rslt = Single_factor(GSS, return_data, 5, f_name, wgt, True)
         rslt.iloc[0,:] = rslt.iloc[0,:] * 100
         rslt.iloc[0, :] = rslt.iloc[0,:].round(3)
 
