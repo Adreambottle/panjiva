@@ -6,12 +6,12 @@ import numpy as np
 from scipy import stats
 
 
-lass controller():
+class controller():
     def __init__(self):
         self.year_list= [i for i in range(2007,2021)]
         
     def generate_query(self,year):
-        query_base =
+        query_base = "lcusimport"
         """
         copy(select 
                 panjivarecordid,
@@ -35,6 +35,9 @@ lass controller():
         return year_query
     
     def excute_query2df(self, query):
+        """
+        执行 query
+        """
         conn = psycopg2.connect(host="127.0.0.1", user="postgres", password="root", database="CIQ_Target")
         cur = conn.cursor()
         cur.execute(query)

@@ -6,13 +6,9 @@ import seaborn as sns
 import warnings
 warnings.filterwarnings("ignore")
 import datetime
-# pd.set_option('display.max_columns', None)
-# pd.set_option('display.max_rows', None)
 
-# data_path = r"/Users/meron/Desktop/01_Work/panjiva_data/compustat.csv"
-# data = pd.read_csv(data_path, index_col=["gvkey", "datadate"])
 
-from toolkit.scale import mad
+from c_toolkit.scale import mad
 
 def plot(ser):
     # plt.hist(ser)
@@ -36,6 +32,10 @@ class Get_Attribute():
         # sample = data.sample(1000)
 
     def get_attribute(self):
+        """
+
+        :return:
+        """
         data = self.data
 
         Size = data["prcc_f"] * data["csho"]

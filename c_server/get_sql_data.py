@@ -1,3 +1,7 @@
+"""
+从PostgreSQL中取数
+"""
+
 import psycopg2
 import pandas as pd
 import time
@@ -73,6 +77,12 @@ gvkey_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\gvkey_panjiva.csv"
 
 @GetRunTime
 def merge_data(data_path, gvkey_path):
+    """
+    从 PostgreSQL 中去书
+    :param data_path:
+    :param gvkey_path:
+    :return:
+    """
     # data_path = data_paths[0]
     pj_data = pd.read_csv(data_path)
     pj_data.columns = Column_Name

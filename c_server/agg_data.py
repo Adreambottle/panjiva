@@ -1,9 +1,14 @@
+"""
+用于从数据中制造 panjiva data 的相关变量
+"""
+
+
 import pandas as pd
 import warnings
 import re
 import numpy as np
 import datetime
-from toolkit.scale import mad
+from c_toolkit.scale import mad
 warnings.filterwarnings('ignore')
 
 
@@ -35,6 +40,9 @@ class FA():
         self.save_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\savings"
 
     def calculate(self):
+        """
+        执行计算语句
+        """
         GSS = self.GSS
         self.get_GL()
         self.get_SC()
@@ -58,19 +66,37 @@ class FA():
         return output
 
     def form_hscode(self, hscode):
+        """
+        因为 hscode 有很多种编码模式
+        将 hscode 改成六位数
+        """
         hscode = re.split(':', str(hscode))[-1][:6]
         return hscode
 
     def form_data(self, data):
+        """
+        重新整理数据
+        将 hscode 改成六位数编码的
+        将 shpmtorigin 货物发出地改成全部是小写的
+        """
         data = data.dropna(subset=self.drop_na_col)
         data["hscode"] = data["hscode"].apply(self.form_hscode)
         data['shpmtorigin'] = data['shpmtorigin'].str.lower()
         return data
 
     def read_data(self):
+
+        """
+        读取数据，分成两种读取方式，因为数据量过大，调试的时候会选用 Sample Data
+        如果 self.sample 是 True，代表选用测试数据
+        如果 self.sample 是 False，代表选用真实的数据
+        :return: 将生成的数据添加到 self.data_list 中
+        """
         gv_pj_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\gvkey_panjiva.csv"
 
         if self.sample == True:
+            # 读取 Sample data，只是用 2018 和 2019 年两年的数据
+            # Sample data 是从元数据中随机抽样来的
             self.year_list = [2018, 2019]
             self.data_paths = [r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\sample\2018.csv",
                                r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\sample\2019.csv"]
@@ -81,6 +107,7 @@ class FA():
                 self.data_list.append(data)
 
         else:
+            # 读取真实数据
             self.year_list = [i for i in range(2008, 2020)]
             self.dir_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data"
             self.data_paths = [self.dir_path + r"\test" + str(i) + "new.csv" for i in self.year_list]
@@ -91,6 +118,13 @@ class FA():
                 self.data_list.append(data)
 
     def get_SC(self):
+        """
+        构建 SC 变量
+        在 groupby 的时候
+        按照按照母公司还是本公司需要考虑
+        hscode 需要改成只选用前两位
+        否则会出现大量的数据都是 1 的情况
+        """
         print("Calculating SC\n")
         SC_list = []
         for i, year in enumerate(self.year_list):
@@ -124,8 +158,11 @@ class FA():
         print("SC\n", SC_total["SC"].describe())
         self.GSS["SC"] = SC_total
 
-    def get_RS(self):
 
+    def get_RS(self):
+        """
+        构建 RS 变量
+        """
         print("Calculating RS\n")
         for i, year in enumerate(self.year_list):
             print(f"Processing data on year {year}\n")
@@ -163,6 +200,10 @@ class FA():
         self.GSS["RS"] = RS_total
 
     def get_GL(self):
+        """
+        构建 GL 变量
+        因为没有 shipping time 的数据 所以是用 shipment 替代数据
+        """
         COGS_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\compustat.csv"
         COGS = pd.read_csv(COGS_path,
                            usecols=["gvkey", "fyear", "cogs"])
@@ -209,7 +250,10 @@ class FA():
         self.GSS["GL"] = GL_total
 
     def get_LE(self):
-
+        """
+        获取 LE 变量
+        用到了来自 world bank 的数据
+        """
         LPI_path = r"C:\Users\Wu Jing\Documents\GitHub\panjiva_data\others\LPI.xlsx"
         LPI_2018 = pd.read_excel(LPI_path, sheet_name="2018", header=2, usecols=[0, 2])
         LPI_2016 = pd.read_excel(LPI_path, sheet_name="2016", header=2, usecols=[0, 2])

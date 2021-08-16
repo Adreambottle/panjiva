@@ -1,7 +1,6 @@
-import pandas as pd
+"""
+因为 hscode 有多次迭代，需要将 hscode 按照某一年的标准进行统一
+"""
 
-x = pd.DataFrame({'a':[1,1,3,3],'b':[3,3,5,5]},index=[11,11,12,12])
-y = x.stack()
-print(y)
-print(y.groupby(level=[0,1]).sum())
+import pandas as pd
 

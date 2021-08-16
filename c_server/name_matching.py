@@ -1,3 +1,7 @@
+"""
+用于两个数据库之间的 name_matching
+"""
+
 import pandas as pd
 import numpy as np
 import re
@@ -7,6 +11,9 @@ gvkey_path = "/Users/meron/Desktop/01_Work/data_syl/name_gvkey.xlsx"
 
 
 def drop_suffix(name):
+    """
+    将 firm name 去后缀
+    """
     # suffix_set = ["INC", "CORP", "-CL A", "LTD", "FD", "NV"]
     suffix_set = r"\b(INC|CORP|LTD|\-CL A|FD|NV|CO|LLC|LP|HONGDINGS|CA|-NM|Company)\b"
     name.strip()
