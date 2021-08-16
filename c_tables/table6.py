@@ -13,6 +13,13 @@ from c_toolkit.scale import mad
 
 
 def cls_sic():
+    """
+    将公司分成几类
+    Retailers 零售
+    Wholesalers 批发
+    Manufacturers 制造
+    :return: 返回一个dictionary，每个value是一个sub dataframe
+    """
     sic_path = "/Users/meron/Desktop/01_Work/panjiva_data/return_data/gvkey_sic.csv"
     sic_data = pd.read_csv(sic_path)
     sic_data['year'] = pd.to_datetime(sic_data['fyear'], format="%Y").apply(lambda x: x.year)
@@ -126,6 +133,8 @@ return_data = pd.read_csv(return_path)
 
 
 sic_data = cls_sic()
+
+
 
 # 进行 SIC 分类的时候
 

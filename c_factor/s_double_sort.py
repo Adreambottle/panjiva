@@ -11,11 +11,6 @@ import datetime
 import statsmodels.api as sm
 import statsmodels.formula.api as sml
 
-fmdata = alldata.set_index(['stockcode','tradedate'])
-fm = FamaMacBeth(dependent = fmdata['ret'],
-                 exog = sm.add_constant(fmdata[['pb','mktcap','mom1','roe_ttm']]))
-res_fm = fm.fit(debiased=False)
-res_fm
 
 def getRet(price, freq='d', if_shift=True):
     """

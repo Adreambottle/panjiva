@@ -41,6 +41,39 @@ def ifst(x):
 
 
 
+def getRet(price, freq='d', if_shift=True):
+    """
+    如何得到 return rate
+    """
+    price = price.copy()
+
+    if freq == 'w':
+        price['weeks'] = price['tradedate'].apply(lambda x: x.isocalendar()[0] * 100 + x.isocalendar()[1])
+        ret = price.groupby(['weeks', 'stockcode']).last().reset_index()
+        del ret['weeks']
+
+    elif freq == 'm':
+        price['ym'] = price.tradedate.apply(lambda x: x.year * 100 + x.month)
+        ret = price.groupby(['ym', 'stockcode']).last().reset_index()
+        del ret['ym']
+
+    ret = ret[['tradedate', 'stockcode', 'price']]
+    if if_shift:
+        ret = ret.groupby('stockcode').apply(lambda x: x.set_index('tradedate').price.pct_change(1).shift(-1))
+    else:
+        ret = ret.groupby('stockcode').apply(lambda x: x.set_index('tradedate').price.pct_change(1))
+
+    ret = ret.reset_index()
+    ret = ret.rename(columns={ret.columns[2]: 'ret'})
+    return ret
+
+def getdate(x):
+    if type(x) == str:
+        return pd.Timestamp(x).date()
+    else:
+        return datetime.date(int(str(x)[:4]), int(str(x)[4:6]), int(str(x)[6:]))
+
+
 
 
 def ols_coef1(x, formula):

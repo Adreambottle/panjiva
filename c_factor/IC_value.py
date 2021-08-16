@@ -11,6 +11,10 @@ import matplotlib.pyplot as plt
 
 
 def get_import_proportion():
+    """
+    获取进口金额的比例
+    :return:
+    """
     imp_value_path = r"/Users/meron/Desktop/01_Work/panjiva_data/import_value.csv"
     compustat_path = r"/Users/meron/Desktop/01_Work/panjiva_data/v1/compustat.csv"
 
