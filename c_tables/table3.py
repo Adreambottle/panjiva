@@ -10,7 +10,7 @@ warnings.filterwarnings('ignore')
 
 
 
-def Single_factor(factor, ret, groups, f_name, wgt, all_c):
+def Single_factor(factor, ret, group_list, groups, f_name, wgt):
 
     # factor = GSS
     # f_name = "RS"
@@ -22,7 +22,6 @@ def Single_factor(factor, ret, groups, f_name, wgt, all_c):
     year_list = factor['year'].unique()
 
     # group_list = range(1, groups+1)
-    group_list = [1, groups]
 
     f_use = factor[['gvkey', 'year', f_name]]
     f_use = f_use.dropna(how='any')
@@ -45,8 +44,11 @@ def Single_factor(factor, ret, groups, f_name, wgt, all_c):
             if not f_u_sub.empty:
                 X_data = sm.add_constant(f_u_ttl[f_name], has_constant='add')
                 y_data = f_u_ttl[wgt]
-                result = sm.OLS(y_data, X_data).fit()
-                para = result.params[0]
+                try:
+                    result = sm.OLS(y_data, X_data).fit()
+                    para = result.params[0]
+                except:
+                    para = 0
                 val_g_p[g] = para
             else:
                 val_g_p[g] = None
@@ -56,7 +58,11 @@ def Single_factor(factor, ret, groups, f_name, wgt, all_c):
     p_rslt = pd.DataFrame(val_y_p)
     p_rslt = p_rslt.iloc[::-1,:]
     p_rslt.index = list(p_rslt.index)[::-1]
-    p_HL = p_rslt.iloc[-1, :] - p_rslt.iloc[0, :]
+    try:
+        p_HL = p_rslt.iloc[-1, :] - p_rslt.iloc[0, :]
+    except:
+        p_HL = np.array([np.nan]*p_rslt.shape[1])
+
     p_HL = pd.DataFrame({"H-L":p_HL})
     p_rslt = pd.concat([p_rslt, p_HL.T])
 

@@ -8,7 +8,7 @@ warnings.filterwarnings('ignore')
 from c_toolkit.scale import mad
 from c_toolkit.factor import add_month, getICSeries, form_t_p
 import matplotlib.pyplot as plt
-from c_tables.table3 import Single_factor
+# from c_tables.table3 import Single_factor
 
 
 def get_import_proportion():
@@ -31,7 +31,7 @@ def get_import_proportion():
     imp_data['import_rate'] = mad(imp_data['import_rate'], 10)
 
     firm_data = imp_data.groupby(['gvkey']).agg({'import_rate':'mean'})
-    firm_data['groups'] = firm_data.apply(lambda x: np.ceil(x.rank() / (len(x) / 3)))
+    firm_data['groups'] = firm_data.apply(lambda x: np.ceil(x.rank() / (len(x) / 2)))
     # 1 - 3 是由少到大分布的
 
     return firm_data
@@ -53,7 +53,8 @@ for g in [1, 2, 3]:
     rslt_list = []
     GSS_sub = GSS[GSS['groups']==g]
     for f_name in ["GL", "SC", "LE", "RS"]:
-        rslt = Single_factor(GSS_sub, return_data, 5, f_name, "vw", False)
+        rslt = Single_factor(factor=GSS_sub, ret=return_data, group_list=[1, 2, 3],
+                             groups=3, f_name=f_name, wgt="vw")
         try:
             rslt = form_t_p(rslt)
         except:
@@ -63,4 +64,4 @@ for g in [1, 2, 3]:
     rslt_t["imp_rate"] = g
     rslt_ll.append(rslt_t)
 rslt_total = pd.concat(rslt_ll, axis=1)
-rslt_total.to_excel("/Users/meron/Desktop/01_Work/panjiva/logger/imp_fct_test.xlsx")
+rslt_total.to_excel("/Users/meron/Desktop/01_Work/panjiva/logger/imp_fct_2.xlsx")
