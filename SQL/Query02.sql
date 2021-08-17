@@ -1,1 +1,0 @@
-select gvkey, relatedcompanyid from ciqgvkeyiid;
