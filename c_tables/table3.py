@@ -17,6 +17,8 @@ def Single_factor(factor, ret, group_list, groups, f_name, wgt):
     # groups = 5
     # wgt = "vw"
     print("Start")
+
+    # 在变量中 weight 的形式叫做 "vwr" 或 "ewr"
     wgt = wgt + "r"
     ret = ret.loc[:, [wgt, 'gvkey', 'year', 'month']]
     year_list = factor['year'].unique()
@@ -25,9 +27,14 @@ def Single_factor(factor, ret, group_list, groups, f_name, wgt):
 
     f_use = factor[['gvkey', 'year', f_name]]
     f_use = f_use.dropna(how='any')
+
+    # 以年份进行 groupby 按照从小到达的顺序将
+    # lambda x: np.ceil(x.rank() / (len(x) / groups)    组别的名称是：rank / (每组的长度)
     f_use['groups'] = f_use.groupby("year")[f_name].apply(lambda x: np.ceil(x.rank() / (len(x) / groups)))
 
     val_y_p = {}
+
+    # 先按照每年进行循环
     for y in year_list:
         val_g_p = {}
         for g in group_list:
