@@ -1,3 +1,7 @@
+"""
+单因子测试
+"""
+
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
@@ -174,8 +178,6 @@ def Single_factor_EW_2(factor, ret, groups, f_name="RS"):
     return result_df
 
 
-def add_branket(df):
-    df['']
 
 # region 载入数据
 factor_path = r"/Users/meron/Desktop/01_Work/panjiva_data/factor.csv"

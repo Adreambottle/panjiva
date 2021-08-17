@@ -1,3 +1,9 @@
+"""
+进行 FamaMacBeth Test
+这个在 linearmodels 里面有直接写好的函数
+需要 multi-index，一个 index 是时间，一个 index 是股票的
+参考的别人的代码
+"""
 from linearmodels import FamaMacBeth
 import numpy as np
 import pandas as pd

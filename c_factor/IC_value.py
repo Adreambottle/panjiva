@@ -1,3 +1,7 @@
+"""
+用于计算一个Factor 的 IC 值
+"""
+
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm

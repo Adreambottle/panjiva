@@ -1,5 +1,6 @@
 """
 第一版Group_Test
+里面的函数可以直接调用
 """
 
 import numpy as np

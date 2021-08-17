@@ -1,3 +1,9 @@
+"""
+将不同形式的 return 变成相同的形式
+有的公司是用 gvkey 的，有的公司用 cusip 9 位，有的公司用 cusip 10 位
+需要进行 match 处理
+"""
+
 import pandas as pd
 import numpy as np
 
